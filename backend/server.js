@@ -7,6 +7,7 @@ const patientRoutes = require('./routes/patientRoutes'); //connect routes to the
 const medicalRecordRoutes = require('./routes/medicalRecordRoutes');
 const prescriptionRoutes = require('./routes/prescriptionRoutes');
 const labReportRoutes = require('./routes/labReportRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,6 +19,7 @@ app.use('/', patientRoutes);
 app.use('/', medicalRecordRoutes);
 app.use('/', prescriptionRoutes);
 app.use('/', labReportRoutes);
+app.use('/', authRoutes);
 
 // Simple test route
 app.get('/', (req, res) => {
