@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Laboratory Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary px-3">
+        <span class="navbar-brand mb-0 h1">Laboratory Dashboard</span>
+        <div>
+            <span class="text-white me-3" id="userLabel"></span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+
+        <div class="card p-4 shadow-sm mb-4">
+            <h5>Scan Patient QR</h5>
+            <button class="btn btn-secondary mb-3" id="startScanBtn">Start Scanner</button>
+            <div id="reader" style="width: 300px;"></div>
+            <div id="scanStatus" class="text-muted mt-2"></div>
+        </div>
+
+        <div id="patientSection" class="d-none">
+            <div class="card p-4 shadow-sm mb-4">
+                <h5>Patient: <span id="patientName"></span> (ID: <span id="patientIdLabel"></span>)</h5>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card p-4 shadow-sm">
+                        <h6>Lab Reports</h6>
+                        <div id="reportsList">
+                            <p class="text-muted">No reports yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card p-4 shadow-sm">
+                        <h6>Add Lab Report</h6>
+                        <div id="errorBox" class="alert alert-danger d-none"></div>
+                        <div id="successBox" class="alert alert-success d-none"></div>
+                        <form id="reportForm">
+                            <div class="mb-2">
+                                <label class="form-label">Test Name</label>
+                                <input type="text" class="form-control" id="testName" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Result</label>
+                                <textarea class="form-control" id="result"></textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Report Date</label>
+                                <input type="date" class="form-control" id="reportDate">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Save Report</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/api.js"></script>
+    <script>
+        document.getElementById('userLabel').textContent =
+            localStorage.getItem('username') + ' (' + localStorage.getItem('department') + ')';
+
+        getToken();
+
+        if (localStorage.getItem('department') !== 'Laboratory') {
+            alert('Access denied: this page is for Laboratory staff only.');
+            window.location.href = '/login.html';
+        }
+
+        let currentPatientId = null;
+        let html5QrCode = null;
+
+        document.getElementById('startScanBtn').addEventListener('click', () => {
+            document.getElementById('scanStatus').textContent = 'Starting camera...';
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                onScanSuccess
+            ).catch(err => {
+                document.getElementById('scanStatus').textContent = 'Camera error: ' + err;
+            });
+        });
+
+        async function onScanSuccess(decodedText) {
+            let patientId;
+            try {
+                patientId = JSON.parse(decodedText).patientId;
+            } catch (e) {
+                document.getElementById('scanStatus').textContent = 'Invalid QR code scanned.';
+                return;
+            }
+
+            html5QrCode.stop();
+            document.getElementById('scanStatus').textContent = 'Scanned patient ID: ' + patientId;
+
+            currentPatientId = patientId;
+            await loadPatientData(patientId);
+        }
+
+        async function loadPatientData(patientId) {
+            try {
+                const patient = await apiRequest(`/patients/${patientId}`, 'GET');
+                document.getElementById('patientName').textContent = patient.name;
+                document.getElementById('patientIdLabel').textContent = patient.id;
+                document.getElementById('patientSection').classList.remove('d-none');
+
+                await loadReports(patientId);
+            } catch (err) {
+                alert('Error loading patient: ' + err.message);
+            }
+        }
+
+        async function loadReports(patientId) {
+            try {
+                const reports = await apiRequest(`/lab-reports/patient/${patientId}`, 'GET');
+                const listDiv = document.getElementById('reportsList');
+
+                if (reports.length === 0) {
+                    listDiv.innerHTML = '<p class="text-muted">No reports yet.</p>';
+                    return;
+                }
+
+                listDiv.innerHTML = reports.map(r => `
+                    <div class="border-bottom mb-2 pb-2">
+                        <strong>${r.test_name}</strong><br>
+                        <small class="text-muted">${r.result || ''}</small><br>
+                        <small class="text-muted">${r.report_date ? new Date(r.report_date).toLocaleDateString() : ''}</small>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+            errorBox.classList.add('d-none');
+            successBox.classList.add('d-none');
+
+            try {
+                await apiRequest('/lab-reports', 'POST', {
+                    patient_id: currentPatientId,
+                    test_name: document.getElementById('testName').value,
+                    result: document.getElementById('result').value,
+                    report_date: document.getElementById('reportDate').value
+                });
+
+                successBox.textContent = 'Lab report saved successfully!';
+                successBox.classList.remove('d-none');
+                document.getElementById('reportForm').reset();
+
+                await loadReports(currentPatientId);
+
+            } catch (err) {
+                errorBox.textContent = err.message;
+                errorBox.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+</html>

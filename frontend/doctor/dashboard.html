@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary px-3">
+        <span class="navbar-brand mb-0 h1">Doctor Dashboard</span>
+        <div>
+            <span class="text-white me-3" id="userLabel"></span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+
+        <!-- Scanner Section -->
+        <div class="card p-4 shadow-sm mb-4">
+            <h5>Scan Patient QR</h5>
+            <button class="btn btn-secondary mb-3" id="startScanBtn">Start Scanner</button>
+            <div id="reader" style="width: 300px;"></div>
+            <div id="scanStatus" class="text-muted mt-2"></div>
+        </div>
+
+        <!-- Patient Info + Records (hidden until a patient is scanned) -->
+        <div id="patientSection" class="d-none">
+            <div class="card p-4 shadow-sm mb-4">
+                <h5>Patient: <span id="patientName"></span> (ID: <span id="patientIdLabel"></span>)</h5>
+            </div>
+
+            <div class="row">
+                <!-- Existing medical records -->
+                <div class="col-md-6">
+                    <div class="card p-4 shadow-sm">
+                        <h6>Medical History</h6>
+                        <div id="recordsList">
+                            <p class="text-muted">No records yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add new diagnosis -->
+                <div class="col-md-6">
+                    <div class="card p-4 shadow-sm">
+                        <h6>Add Diagnosis</h6>
+                        <div id="errorBox" class="alert alert-danger d-none"></div>
+                        <div id="successBox" class="alert alert-success d-none"></div>
+                        <form id="recordForm">
+                            <div class="mb-2">
+                                <label class="form-label">Diagnosis</label>
+                                <input type="text" class="form-control" id="diagnosis" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Doctor Notes</label>
+                                <textarea class="form-control" id="doctorNotes"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Save Diagnosis</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/api.js"></script>
+    <script>
+        document.getElementById('userLabel').textContent =
+            localStorage.getItem('username') + ' (' + localStorage.getItem('department') + ')';
+
+        getToken();
+
+        if (localStorage.getItem('department') !== 'Doctor') {
+            alert('Access denied: this page is for Doctors only.');
+            window.location.href = '/login.html';
+        }
+
+        let currentPatientId = null;
+        let html5QrCode = null;
+
+        document.getElementById('startScanBtn').addEventListener('click', () => {
+            document.getElementById('scanStatus').textContent = 'Starting camera...';
+
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                onScanSuccess
+            ).catch(err => {
+                document.getElementById('scanStatus').textContent = 'Camera error: ' + err;
+            });
+        });
+
+        async function onScanSuccess(decodedText) {
+            let patientId;
+            try {
+                const parsed = JSON.parse(decodedText);
+                patientId = parsed.patientId;
+            } catch (e) {
+                document.getElementById('scanStatus').textContent = 'Invalid QR code scanned.';
+                return;
+            }
+
+            // Stop the camera once we've got a successful scan
+            html5QrCode.stop();
+            document.getElementById('scanStatus').textContent = 'Scanned patient ID: ' + patientId;
+
+            currentPatientId = patientId;
+            await loadPatientData(patientId);
+        }
+
+        async function loadPatientData(patientId) {
+            try {
+                const patient = await apiRequest(`/patients/${patientId}`, 'GET');
+                document.getElementById('patientName').textContent = patient.name;
+                document.getElementById('patientIdLabel').textContent = patient.id;
+                document.getElementById('patientSection').classList.remove('d-none');
+
+                await loadRecords(patientId);
+            } catch (err) {
+                alert('Error loading patient: ' + err.message);
+            }
+        }
+
+        async function loadRecords(patientId) {
+            try {
+                const records = await apiRequest(`/medical-records/patient/${patientId}`, 'GET');
+                const listDiv = document.getElementById('recordsList');
+
+                if (records.length === 0) {
+                    listDiv.innerHTML = '<p class="text-muted">No records yet.</p>';
+                    return;
+                }
+
+                listDiv.innerHTML = records.map(r => `
+                    <div class="border-bottom mb-2 pb-2">
+                        <strong>${r.diagnosis}</strong><br>
+                        <small class="text-muted">${r.doctor_notes || ''}</small><br>
+                        <small class="text-muted">${new Date(r.created_at).toLocaleDateString()}</small>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.getElementById('recordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+            errorBox.classList.add('d-none');
+            successBox.classList.add('d-none');
+
+            try {
+                await apiRequest('/medical-records', 'POST', {
+                    patient_id: currentPatientId,
+                    diagnosis: document.getElementById('diagnosis').value,
+                    doctor_notes: document.getElementById('doctorNotes').value
+                });
+
+                successBox.textContent = 'Diagnosis saved successfully!';
+                successBox.classList.remove('d-none');
+                document.getElementById('recordForm').reset();
+
+                await loadRecords(currentPatientId);
+
+            } catch (err) {
+                errorBox.textContent = err.message;
+                errorBox.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+</html>
