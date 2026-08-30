@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Scanner Test</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <h2>Scan Patient QR Code</h2>
+
+    <div>
+        <label>Paste your login token here first: </label><br>
+        <input type="text" id="tokenInput" style="width: 500px;" placeholder="Paste JWT token from login">
+    </div>
+    <br>
+
+    <div id="reader" style="width: 400px;"></div>
+
+    <h3>Result:</h3>
+    <pre id="result">Waiting for scan...</pre>
+
+    <script>
+        const resultBox = document.getElementById('result');
+
+        function onScanSuccess(decodedText) {
+            resultBox.textContent = "QR scanned: " + decodedText;
+
+            let patientId;
+            try {
+                const parsed = JSON.parse(decodedText);
+                patientId = parsed.patientId;
+            } catch (e) {
+                resultBox.textContent = "Could not read QR data.";
+                return;
+            }
+
+            const token = document.getElementById('tokenInput').value;
+
+            if (!token) {
+                resultBox.textContent = "Please paste your login token first, then scan again.";
+                return;
+            }
+
+            fetch(`http://localhost:5000/patients/${patientId}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(res => res.json())
+            .then(data => {
+                resultBox.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(err => {
+                resultBox.textContent = "Error fetching patient: " + err;
+            });
+        }
+
+        const html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            onScanSuccess
+        );
+    </script>
+</body>
+</html>
