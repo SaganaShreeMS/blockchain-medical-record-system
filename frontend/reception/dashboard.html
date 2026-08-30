@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reception Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary px-3">
+        <span class="navbar-brand mb-0 h1">Reception Dashboard</span>
+        <div>
+            <span class="text-white me-3" id="userLabel"></span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Registration Form -->
+            <div class="col-md-6">
+                <div class="card p-4 shadow-sm">
+                    <h5>Register New Patient</h5>
+                    <div id="errorBox" class="alert alert-danger d-none"></div>
+                    <div id="successBox" class="alert alert-success d-none"></div>
+
+                    <form id="patientForm">
+                        <div class="mb-2">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Age</label>
+                            <input type="number" class="form-control" id="age">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Gender</label>
+                            <select class="form-control" id="gender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" id="address">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Register & Generate QR</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- QR Display -->
+            <div class="col-md-6">
+                <div class="card p-4 shadow-sm text-center">
+                    <h5>Patient QR Code</h5>
+                    <div id="qrResult">
+                        <p class="text-muted">Register a patient to generate their QR code.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/api.js"></script>
+    <script>
+        // Show who's logged in
+        document.getElementById('userLabel').textContent =
+            localStorage.getItem('username') + ' (' + localStorage.getItem('department') + ')';
+
+        // Redirect to login if not authenticated
+        getToken();
+
+        if (localStorage.getItem('department') !== 'Reception') {
+          alert('Access denied: this page is for Reception only.');
+          window.location.href = '/login.html';
+      }
+
+        document.getElementById('patientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const errorBox = document.getElementById('errorBox');
+            const successBox = document.getElementById('successBox');
+            errorBox.classList.add('d-none');
+            successBox.classList.add('d-none');
+
+            const patientData = {
+                name: document.getElementById('name').value,
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value
+            };
+
+            try {
+                // Step 1: create the patient
+                const created = await apiRequest('/patients', 'POST', patientData);
+                const newPatientId = created.patientId;
+
+                successBox.textContent = `Patient registered successfully (ID: ${newPatientId})`;
+                successBox.classList.remove('d-none');
+
+                // Step 2: immediately generate their QR code
+                const qrData = await apiRequest(`/patients/${newPatientId}/qrcode`, 'GET');
+
+                document.getElementById('qrResult').innerHTML = `
+                    <p><strong>${qrData.name}</strong> (ID: ${qrData.patientId})</p>
+                    <img src="${qrData.qrCode}" alt="Patient QR Code" style="width: 200px;">
+                `;
+
+                document.getElementById('patientForm').reset();
+
+            } catch (err) {
+                errorBox.textContent = err.message;
+                errorBox.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+</html>

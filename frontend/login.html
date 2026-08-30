@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Medical Record System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container d-flex justify-content-center align-items-center" style="height: 100vh;">
+        <div class="card p-4 shadow" style="width: 350px;">
+            <h4 class="mb-3 text-center">Staff Login</h4>
+
+            <div id="errorBox" class="alert alert-danger d-none"></div>
+
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorBox = document.getElementById('errorBox');
+            errorBox.classList.add('d-none');
+
+            try {
+                const res = await fetch(API_BASE + '/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                // Save token and department, then redirect based on department
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('department', data.department);
+                localStorage.setItem('username', username);
+
+                const redirects = {
+                    'Reception': '/reception/dashboard.html',
+                    'Doctor': '/doctor/dashboard.html',
+                    'Laboratory': '/laboratory/dashboard.html',
+                    'Pharmacy': '/pharmacy/dashboard.html',
+                    'Admin': '/admin/dashboard.html'
+                };
+
+                window.location.href = redirects[data.department] || '/login.html';
+
+            } catch (err) {
+                errorBox.textContent = err.message;
+                errorBox.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+</html>
