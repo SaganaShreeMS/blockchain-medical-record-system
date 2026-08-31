@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pharmacy Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary px-3">
+        <span class="navbar-brand mb-0 h1">Pharmacy Dashboard</span>
+        <div>
+            <span class="text-white me-3" id="userLabel"></span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+
+        <div class="card p-4 shadow-sm mb-4">
+            <h5>Scan Patient QR</h5>
+            <button class="btn btn-secondary mb-3" id="startScanBtn">Start Scanner</button>
+            <div id="reader" style="width: 300px;"></div>
+            <div id="scanStatus" class="text-muted mt-2"></div>
+        </div>
+
+        <div id="patientSection" class="d-none">
+            <div class="card p-4 shadow-sm mb-4">
+                <h5>Patient: <span id="patientName"></span> (ID: <span id="patientIdLabel"></span>)</h5>
+            </div>
+
+            <div class="card p-4 shadow-sm">
+                <h6>Medical Records & Prescriptions</h6>
+                <div id="recordsList">
+                    <p class="text-muted">No records found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/api.js"></script>
+    <script>
+        document.getElementById('userLabel').textContent =
+            localStorage.getItem('username') + ' (' + localStorage.getItem('department') + ')';
+
+        getToken();
+
+        if (localStorage.getItem('department') !== 'Pharmacy') {
+            alert('Access denied: this page is for Pharmacy staff only.');
+            window.location.href = '/login.html';
+        }
+
+        let html5QrCode = null;
+
+        document.getElementById('startScanBtn').addEventListener('click', () => {
+            document.getElementById('scanStatus').textContent = 'Starting camera...';
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                onScanSuccess
+            ).catch(err => {
+                document.getElementById('scanStatus').textContent = 'Camera error: ' + err;
+            });
+        });
+
+        async function onScanSuccess(decodedText) {
+            let patientId;
+            try {
+                patientId = JSON.parse(decodedText).patientId;
+            } catch (e) {
+                document.getElementById('scanStatus').textContent = 'Invalid QR code scanned.';
+                return;
+            }
+
+            html5QrCode.stop();
+            document.getElementById('scanStatus').textContent = 'Scanned patient ID: ' + patientId;
+
+            await loadPatientData(patientId);
+        }
+
+        async function loadPatientData(patientId) {
+            try {
+                const patient = await apiRequest(`/patients/${patientId}`, 'GET');
+                document.getElementById('patientName').textContent = patient.name;
+                document.getElementById('patientIdLabel').textContent = patient.id;
+                document.getElementById('patientSection').classList.remove('d-none');
+
+                await loadPrescriptions(patientId);
+            } catch (err) {
+                alert('Error loading patient: ' + err.message);
+            }
+        }
+
+        // Pharmacy needs to: get all medical records for this patient,
+        // then for each record, get its prescriptions
+        async function loadPrescriptions(patientId) {
+            const listDiv = document.getElementById('recordsList');
+
+            try {
+                const records = await apiRequest(`/medical-records/patient/${patientId}`, 'GET');
+
+                if (records.length === 0) {
+                    listDiv.innerHTML = '<p class="text-muted">No medical records found for this patient.</p>';
+                    return;
+                }
+
+                let html = '';
+
+                for (const record of records) {
+                    const prescriptions = await apiRequest(`/prescriptions/record/${record.id}`, 'GET');
+
+                    html += `<div class="mb-3 pb-2 border-bottom">
+                        <strong>Diagnosis:</strong> ${record.diagnosis}
+                        <small class="text-muted">(${new Date(record.created_at).toLocaleDateString()})</small>`;
+
+                    if (prescriptions.length === 0) {
+                        html += `<p class="text-muted ms-3 mb-0">No prescriptions for this record.</p>`;
+                    } else {
+                        html += '<ul class="mb-0">';
+                        prescriptions.forEach(p => {
+                            html += `<li>${p.medicine_name} — ${p.dosage || 'N/A'}, ${p.duration || 'N/A'}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+
+                    html += `</div>`;
+                }
+
+                listDiv.innerHTML = html;
+
+            } catch (err) {
+                listDiv.innerHTML = `<p class="text-danger">Error: ${err.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
