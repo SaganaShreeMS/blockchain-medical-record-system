@@ -2,6 +2,8 @@ const db = require('../config/db');
 
 const QRCode = require('qrcode'); //generation of qr as a base64 img
 
+const { recordLog } = require('../config/blockchain');
+
 // POST /patients — add a new patient
 const addPatient = async (req, res) => {
     try {
@@ -36,6 +38,8 @@ const getPatient = async (req, res) => {
         if (rows.length === 0) {
             return res.status(404).json({ error: 'Patient not found' });
         }
+
+        recordLog(id, req.user.department, 'VIEW_PATIENT');
 
         res.status(200).json(rows[0]);
     } catch (err) {

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { recordLog } = require('../config/blockchain');
 
 const addLabReport = async (req, res) => {
     try {
@@ -12,6 +13,8 @@ const addLabReport = async (req, res) => {
             'INSERT INTO lab_reports (patient_id, test_name, result, report_date) VALUES (?, ?, ?, ?)',
             [patient_id, test_name, result, report_date]
         );
+
+        recordLog(patient_id, req.user.department, 'ADD_LAB_REPORT');
 
         res.status(201).json({
             message: 'Lab report added successfully',
@@ -31,6 +34,8 @@ const getLabReportsByPatient = async (req, res) => {
             'SELECT * FROM lab_reports WHERE patient_id = ?',
             [patientId]
         );
+
+        recordLog(patientId, req.user.department, 'VIEW_LAB_REPORTS');
 
         res.status(200).json(rows);
     } catch (err) {

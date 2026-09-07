@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { recordLog } = require('../config/blockchain');
 
 const addMedicalRecord = async (req, res) => {
     try {
@@ -12,6 +13,9 @@ const addMedicalRecord = async (req, res) => {
             'INSERT INTO medical_records (patient_id, diagnosis, doctor_notes) VALUES (?, ?, ?)',
             [patient_id, diagnosis, doctor_notes]
         );
+
+        // Log this action to the blockchain (don't wait for it to block the response)
+        recordLog(patient_id, req.user.department, 'ADD_MEDICAL_RECORD');
 
         res.status(201).json({
             message: 'Medical record added successfully',
@@ -31,6 +35,9 @@ const getMedicalRecordsByPatient = async (req, res) => {
             'SELECT * FROM medical_records WHERE patient_id = ?',
             [patientId]
         );
+
+        // Log this access to the blockchain
+        recordLog(patientId, req.user.department, 'VIEW_MEDICAL_RECORDS');
 
         res.status(200).json(rows);
     } catch (err) {

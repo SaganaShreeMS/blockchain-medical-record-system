@@ -36,8 +36,27 @@
         </div>
 
         <div class="card p-4 shadow-sm">
-            <h5>Blockchain Audit Log</h5>
-            <p class="text-muted">Coming soon — this section will display the tamper-evident record of every patient data access/modification, once the blockchain audit layer is built (Phase 9).</p>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Blockchain Audit Log</h5>
+                <button class="btn btn-sm btn-outline-primary" id="refreshLogsBtn">Refresh</button>
+            </div>
+            <p class="text-muted small">Tamper-evident record of every patient data access/modification, stored on the local blockchain — not editable through the app.</p>
+
+            <div id="logsError" class="alert alert-danger d-none"></div>
+
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Patient ID</th>
+                        <th>Department</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody">
+                    <tr><td colspan="4" class="text-muted">Loading...</td></tr>
+                </tbody>
+            </table>
         </div>
 
     </div>
@@ -54,6 +73,7 @@
             window.location.href = '/login.html';
         }
 
+        // ---- Patient lookup (unchanged from before) ----
         document.getElementById('lookupBtn').addEventListener('click', async () => {
             const patientId = document.getElementById('patientIdInput').value;
             const errorBox = document.getElementById('errorBox');
@@ -80,7 +100,6 @@
 
                 detailsDiv.classList.remove('d-none');
 
-                // Load their medical records too, since Admin has full visibility
                 const records = await apiRequest(`/medical-records/patient/${patientId}`, 'GET');
                 const listDiv = document.getElementById('recordsList');
 
@@ -96,11 +115,49 @@
                     `).join('');
                 }
 
+                // Refresh the audit log too, since this lookup itself just got logged
+                loadAuditLogs();
+
             } catch (err) {
                 errorBox.textContent = err.message;
                 errorBox.classList.remove('d-none');
             }
         });
+
+        // ---- Blockchain audit log ----
+        async function loadAuditLogs() {
+            const tbody = document.getElementById('logsTableBody');
+            const logsError = document.getElementById('logsError');
+            logsError.classList.add('d-none');
+
+            try {
+                const logs = await apiRequest('/audit-logs', 'GET');
+
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-muted">No log entries yet.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = logs.map(log => `
+                    <tr>
+                        <td>${new Date(log.timestamp).toLocaleString()}</td>
+                        <td>${log.patientId}</td>
+                        <td><span class="badge bg-secondary">${log.department}</span></td>
+                        <td>${log.action}</td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                logsError.textContent = 'Error loading audit logs: ' + err.message;
+                logsError.classList.remove('d-none');
+                tbody.innerHTML = '';
+            }
+        }
+
+        document.getElementById('refreshLogsBtn').addEventListener('click', loadAuditLogs);
+
+        // Load logs automatically when the page opens
+        loadAuditLogs();
     </script>
 </body>
 </html>
