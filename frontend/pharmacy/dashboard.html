@@ -2,38 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pharmacy Dashboard</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Pharmacy · Medical Record System</title>
+    <link rel="stylesheet" href="../shared/styles.css">
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
-<body class="bg-light">
+<body style="--dept-color: var(--dept-pharmacy);">
 
-    <nav class="navbar navbar-dark bg-primary px-3">
-        <span class="navbar-brand mb-0 h1">Pharmacy Dashboard</span>
-        <div>
-            <span class="text-white me-3" id="userLabel"></span>
-            <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    <div class="topbar">
+        <div class="topbar-inner">
+            <h1>Pharmacy <span class="topbar-tag">Pharmacy</span></h1>
+            <div class="topbar-user">
+                <span id="userLabel"></span>
+                <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+            </div>
         </div>
-    </nav>
+    </div>
 
-    <div class="container mt-4">
+    <div class="page">
 
-        <div class="card p-4 shadow-sm mb-4">
-            <h5>Scan Patient QR</h5>
-            <button class="btn btn-secondary mb-3" id="startScanBtn">Start Scanner</button>
+        <div class="card">
+            <h5>Scan patient QR</h5>
+            <button class="btn btn-secondary" id="startScanBtn" style="margin-bottom: 14px;">Start scanner</button>
             <div id="reader" style="width: 300px;"></div>
-            <div id="scanStatus" class="text-muted mt-2"></div>
+            <div id="scanStatus" class="muted" style="margin-top: 8px; font-size: 0.85rem;"></div>
         </div>
 
-        <div id="patientSection" class="d-none">
-            <div class="card p-4 shadow-sm mb-4">
-                <h5>Patient: <span id="patientName"></span> (ID: <span id="patientIdLabel"></span>)</h5>
+        <div id="patientSection" class="hidden">
+            <div class="card">
+                <h5>Patient: <span id="patientName"></span> <span class="muted">(ID: <span id="patientIdLabel"></span>)</span></h5>
             </div>
 
-            <div class="card p-4 shadow-sm">
-                <h6>Medical Records & Prescriptions</h6>
+            <div class="card">
+                <h6>Medical records &amp; prescriptions</h6>
                 <div id="recordsList">
-                    <p class="text-muted">No records found.</p>
+                    <p class="muted">No records found.</p>
                 </div>
             </div>
         </div>
@@ -85,7 +87,7 @@
                 const patient = await apiRequest(`/patients/${patientId}`, 'GET');
                 document.getElementById('patientName').textContent = patient.name;
                 document.getElementById('patientIdLabel').textContent = patient.id;
-                document.getElementById('patientSection').classList.remove('d-none');
+                document.getElementById('patientSection').classList.remove('hidden');
 
                 await loadPrescriptions(patientId);
             } catch (err) {
@@ -93,8 +95,6 @@
             }
         }
 
-        // Pharmacy needs to: get all medical records for this patient,
-        // then for each record, get its prescriptions
         async function loadPrescriptions(patientId) {
             const listDiv = document.getElementById('recordsList');
 
@@ -102,7 +102,7 @@
                 const records = await apiRequest(`/medical-records/patient/${patientId}`, 'GET');
 
                 if (records.length === 0) {
-                    listDiv.innerHTML = '<p class="text-muted">No medical records found for this patient.</p>';
+                    listDiv.innerHTML = '<p class="muted">No medical records found for this patient.</p>';
                     return;
                 }
 
@@ -111,14 +111,14 @@
                 for (const record of records) {
                     const prescriptions = await apiRequest(`/prescriptions/record/${record.id}`, 'GET');
 
-                    html += `<div class="mb-3 pb-2 border-bottom">
+                    html += `<div class="record-item">
                         <strong>Diagnosis:</strong> ${record.diagnosis}
-                        <small class="text-muted">(${new Date(record.created_at).toLocaleDateString()})</small>`;
+                        <span class="muted" style="font-size: 0.8rem;">(${new Date(record.created_at).toLocaleDateString()})</span>`;
 
                     if (prescriptions.length === 0) {
-                        html += `<p class="text-muted ms-3 mb-0">No prescriptions for this record.</p>`;
+                        html += `<p class="muted" style="margin: 6px 0 0 12px;">No prescriptions for this record.</p>`;
                     } else {
-                        html += '<ul class="mb-0">';
+                        html += '<ul style="margin: 6px 0 0;">';
                         prescriptions.forEach(p => {
                             html += `<li>${p.medicine_name} — ${p.dosage || 'N/A'}, ${p.duration || 'N/A'}</li>`;
                         });
@@ -131,7 +131,7 @@
                 listDiv.innerHTML = html;
 
             } catch (err) {
-                listDiv.innerHTML = `<p class="text-danger">Error: ${err.message}</p>`;
+                listDiv.innerHTML = `<p style="color: var(--error);">Error: ${err.message}</p>`;
             }
         }
     </script>

@@ -2,49 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Admin · Medical Record System</title>
+    <link rel="stylesheet" href="../shared/styles.css">
 </head>
-<body class="bg-light">
+<body style="--dept-color: var(--dept-admin);">
 
-    <nav class="navbar navbar-dark bg-primary px-3">
-        <span class="navbar-brand mb-0 h1">Admin Dashboard</span>
-        <div>
-            <span class="text-white me-3" id="userLabel"></span>
-            <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
-        </div>
-    </nav>
-
-    <div class="container mt-4">
-
-        <div class="card p-4 shadow-sm mb-4">
-            <h5>Look Up Patient</h5>
-            <div class="input-group mb-3" style="max-width: 400px;">
-                <input type="number" class="form-control" id="patientIdInput" placeholder="Enter Patient ID">
-                <button class="btn btn-primary" id="lookupBtn">Search</button>
-            </div>
-            <div id="errorBox" class="alert alert-danger d-none"></div>
-
-            <div id="patientDetails" class="d-none">
-                <h6>Patient: <span id="patientName"></span> (ID: <span id="patientIdLabel"></span>)</h6>
-                <p><strong>Age:</strong> <span id="patientAge"></span> | <strong>Gender:</strong> <span id="patientGender"></span> | <strong>Phone:</strong> <span id="patientPhone"></span></p>
-                <p><strong>Address:</strong> <span id="patientAddress"></span></p>
-
-                <h6 class="mt-3">Medical Records</h6>
-                <div id="recordsList"><p class="text-muted">Loading...</p></div>
+    <div class="topbar">
+        <div class="topbar-inner">
+            <h1>Admin <span class="topbar-tag">Admin</span></h1>
+            <div class="topbar-user">
+                <span id="userLabel"></span>
+                <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
             </div>
         </div>
+    </div>
 
-        <div class="card p-4 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">Blockchain Audit Log</h5>
-                <button class="btn btn-sm btn-outline-primary" id="refreshLogsBtn">Refresh</button>
+    <div class="page">
+
+        <div class="card">
+            <h5>Look up patient</h5>
+            <div style="display: flex; gap: 8px; max-width: 400px; margin-bottom: 14px;">
+                <input type="number" id="patientIdInput" placeholder="Enter Patient ID" style="flex: 1; border: 1px solid var(--rule); border-radius: 2px; padding: 9px 10px; background: var(--bg); color: var(--ink);">
+                <button class="btn" id="lookupBtn">Search</button>
             </div>
-            <p class="text-muted small">Tamper-evident record of every patient data access/modification, stored on the local blockchain — not editable through the app.</p>
+            <div id="errorBox" class="alert alert-error hidden"></div>
 
-            <div id="logsError" class="alert alert-danger d-none"></div>
+            <div id="patientDetails" class="hidden">
+                <h6>Patient: <span id="patientName"></span> <span class="muted">(ID: <span id="patientIdLabel"></span>)</span></h6>
+                <p class="muted"><strong style="color: var(--on-surface);">Age:</strong> <span id="patientAge"></span> &nbsp;|&nbsp; <strong style="color: var(--on-surface);">Gender:</strong> <span id="patientGender"></span> &nbsp;|&nbsp; <strong style="color: var(--on-surface);">Phone:</strong> <span id="patientPhone"></span></p>
+                <p class="muted"><strong style="color: var(--on-surface);">Address:</strong> <span id="patientAddress"></span></p>
 
-            <table class="table table-sm table-striped">
+                <h6 style="margin-top: 18px;">Medical records</h6>
+                <div id="recordsList"><p class="muted">Loading...</p></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <h5 style="margin-bottom: 0; border: none; padding-bottom: 0;">Blockchain audit log</h5>
+                <button class="btn btn-sm btn-secondary" id="refreshLogsBtn">Refresh</button>
+            </div>
+            <p class="muted" style="font-size: 0.82rem; margin-bottom: 14px;">Tamper-evident record of every patient data access/modification, stored on the local blockchain — not editable through the app.</p>
+
+            <div id="logsError" class="alert alert-error hidden"></div>
+
+            <table>
                 <thead>
                     <tr>
                         <th>Timestamp</th>
@@ -54,7 +56,7 @@
                     </tr>
                 </thead>
                 <tbody id="logsTableBody">
-                    <tr><td colspan="4" class="text-muted">Loading...</td></tr>
+                    <tr><td colspan="4" class="muted">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -73,18 +75,17 @@
             window.location.href = '/login.html';
         }
 
-        // ---- Patient lookup (unchanged from before) ----
         document.getElementById('lookupBtn').addEventListener('click', async () => {
             const patientId = document.getElementById('patientIdInput').value;
             const errorBox = document.getElementById('errorBox');
             const detailsDiv = document.getElementById('patientDetails');
 
-            errorBox.classList.add('d-none');
-            detailsDiv.classList.add('d-none');
+            errorBox.classList.add('hidden');
+            detailsDiv.classList.add('hidden');
 
             if (!patientId) {
                 errorBox.textContent = 'Please enter a patient ID';
-                errorBox.classList.remove('d-none');
+                errorBox.classList.remove('hidden');
                 return;
             }
 
@@ -98,43 +99,41 @@
                 document.getElementById('patientPhone').textContent = patient.phone || 'N/A';
                 document.getElementById('patientAddress').textContent = patient.address || 'N/A';
 
-                detailsDiv.classList.remove('d-none');
+                detailsDiv.classList.remove('hidden');
 
                 const records = await apiRequest(`/medical-records/patient/${patientId}`, 'GET');
                 const listDiv = document.getElementById('recordsList');
 
                 if (records.length === 0) {
-                    listDiv.innerHTML = '<p class="text-muted">No medical records.</p>';
+                    listDiv.innerHTML = '<p class="muted">No medical records.</p>';
                 } else {
                     listDiv.innerHTML = records.map(r => `
-                        <div class="border-bottom mb-2 pb-2">
+                        <div class="record-item">
                             <strong>${r.diagnosis}</strong><br>
-                            <small class="text-muted">${r.doctor_notes || ''}</small><br>
-                            <small class="text-muted">${new Date(r.created_at).toLocaleDateString()}</small>
+                            <span class="muted" style="font-size: 0.85rem;">${r.doctor_notes || ''}</span><br>
+                            <span class="muted" style="font-size: 0.8rem;">${new Date(r.created_at).toLocaleDateString()}</span>
                         </div>
                     `).join('');
                 }
 
-                // Refresh the audit log too, since this lookup itself just got logged
                 loadAuditLogs();
 
             } catch (err) {
                 errorBox.textContent = err.message;
-                errorBox.classList.remove('d-none');
+                errorBox.classList.remove('hidden');
             }
         });
 
-        // ---- Blockchain audit log ----
         async function loadAuditLogs() {
             const tbody = document.getElementById('logsTableBody');
             const logsError = document.getElementById('logsError');
-            logsError.classList.add('d-none');
+            logsError.classList.add('hidden');
 
             try {
                 const logs = await apiRequest('/audit-logs', 'GET');
 
                 if (logs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-muted">No log entries yet.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="muted">No log entries yet.</td></tr>';
                     return;
                 }
 
@@ -142,21 +141,20 @@
                     <tr>
                         <td>${new Date(log.timestamp).toLocaleString()}</td>
                         <td>${log.patientId}</td>
-                        <td><span class="badge bg-secondary">${log.department}</span></td>
+                        <td><span class="tag">${log.department}</span></td>
                         <td>${log.action}</td>
                     </tr>
                 `).join('');
 
             } catch (err) {
                 logsError.textContent = 'Error loading audit logs: ' + err.message;
-                logsError.classList.remove('d-none');
+                logsError.classList.remove('hidden');
                 tbody.innerHTML = '';
             }
         }
 
         document.getElementById('refreshLogsBtn').addEventListener('click', loadAuditLogs);
 
-        // Load logs automatically when the page opens
         loadAuditLogs();
     </script>
 </body>

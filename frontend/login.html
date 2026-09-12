@@ -2,27 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Medical Record System</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Login · Medical Record System</title>
+    <link rel="stylesheet" href="shared/styles.css">
 </head>
-<body class="bg-light">
+<body>
 
-    <div class="container d-flex justify-content-center align-items-center" style="height: 100vh;">
-        <div class="card p-4 shadow" style="width: 350px;">
-            <h4 class="mb-3 text-center">Staff Login</h4>
+    <div class="bg-icons">
+        <svg class="bg-icon" style="top:12%; left:75%; width:130px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>
+        <svg class="bg-icon" style="top:65%; left:8%; width:110px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M2 12h5l2-8 4 16 2-8h7"/></svg>
+    </div>
 
-            <div id="errorBox" class="alert alert-danger d-none"></div>
+    <div class="login-wrap">
+        <div class="login-card" id="loginCard">
+            <p id="deptLabel" class="sub" style="margin-bottom: 2px; font-weight: 600;"></p>
+            <h1>Staff sign-in</h1>
+            <p class="sub"><a href="/select-department.html" style="color: var(--blue);">Change department</a></p>
+
+            <div id="errorBox" class="alert alert-error hidden"></div>
 
             <form id="loginForm">
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" required>
+                <div class="field">
+                    <label>Username</label>
+                    <input type="text" id="username" autocomplete="off" required>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" required>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" id="password" autocomplete="off" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Login</button>
+                <button type="submit" class="btn btn-block">Sign in</button>
             </form>
         </div>
     </div>
@@ -30,13 +37,30 @@
     <script>
         const API_BASE = 'http://localhost:5000';
 
+        const params = new URLSearchParams(window.location.search);
+        const selectedDept = params.get('dept');
+
+        if (!selectedDept) {
+            // No department chosen — send them to pick one first
+            window.location.href = '/select-department.html';
+        }
+
+        document.getElementById('deptLabel').textContent = 'Signing in as ' + selectedDept;
+        document.body.style.setProperty('--dept-color', 'var(--dept-' + selectedDept.toLowerCase() + ')');
+        document.getElementById('loginCard').style.borderTopColor = 'var(--dept-color)';
+        document.getElementById('loginForm').reset();
+
+        window.addEventListener('pageshow', function (event) {
+        document.getElementById('loginForm').reset();
+    });
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorBox = document.getElementById('errorBox');
-            errorBox.classList.add('d-none');
+            errorBox.classList.add('hidden');
 
             try {
                 const res = await fetch(API_BASE + '/auth/login', {
@@ -51,7 +75,13 @@
                     throw new Error(data.error || 'Login failed');
                 }
 
-                // Save token and department, then redirect based on department
+                // Guardrail: does this account's real department match what was selected?
+                if (data.department !== selectedDept) {
+                    errorBox.textContent = `This account belongs to ${data.department}, not ${selectedDept}. Please go back and choose the correct department.`;
+                    errorBox.classList.remove('hidden');
+                    return;
+                }
+
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('department', data.department);
                 localStorage.setItem('username', username);
@@ -64,11 +94,11 @@
                     'Admin': '/admin/dashboard.html'
                 };
 
-                window.location.href = redirects[data.department] || '/login.html';
+                window.location.href = redirects[data.department] || '/select-department.html';
 
             } catch (err) {
                 errorBox.textContent = err.message;
-                errorBox.classList.remove('d-none');
+                errorBox.classList.remove('hidden');
             }
         });
     </script>

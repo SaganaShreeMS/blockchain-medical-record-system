@@ -2,65 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Doctor Dashboard</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Doctor · Medical Record System</title>
+    <link rel="stylesheet" href="../shared/styles.css">
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
-<body class="bg-light">
+<body style="--dept-color: var(--dept-doctor);">
 
-    <nav class="navbar navbar-dark bg-primary px-3">
-        <span class="navbar-brand mb-0 h1">Doctor Dashboard</span>
-        <div>
-            <span class="text-white me-3" id="userLabel"></span>
-            <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    <div class="topbar">
+        <div class="topbar-inner">
+            <h1>Doctor <span class="topbar-tag">Doctor</span></h1>
+            <div class="topbar-user">
+                <span id="userLabel"></span>
+                <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+            </div>
         </div>
-    </nav>
+    </div>
 
-    <div class="container mt-4">
+    <div class="page">
 
-        <!-- Scanner Section -->
-        <div class="card p-4 shadow-sm mb-4">
-            <h5>Scan Patient QR</h5>
-            <button class="btn btn-secondary mb-3" id="startScanBtn">Start Scanner</button>
+        <div class="card">
+            <h5>Scan patient QR</h5>
+            <button class="btn btn-secondary" id="startScanBtn" style="margin-bottom: 14px;">Start scanner</button>
             <div id="reader" style="width: 300px;"></div>
-            <div id="scanStatus" class="text-muted mt-2"></div>
+            <div id="scanStatus" class="muted" style="margin-top: 8px; font-size: 0.85rem;"></div>
         </div>
 
-        <!-- Patient Info + Records (hidden until a patient is scanned) -->
-        <div id="patientSection" class="d-none">
-            <div class="card p-4 shadow-sm mb-4">
-                <h5>Patient: <span id="patientName"></span> (ID: <span id="patientIdLabel"></span>)</h5>
+        <div id="patientSection" class="hidden">
+            <div class="card">
+                <h5>Patient: <span id="patientName"></span> <span class="muted">(ID: <span id="patientIdLabel"></span>)</span></h5>
             </div>
 
-            <div class="row">
-                <!-- Existing medical records -->
-                <div class="col-md-6">
-                    <div class="card p-4 shadow-sm">
-                        <h6>Medical History</h6>
-                        <div id="recordsList">
-                            <p class="text-muted">No records yet.</p>
-                        </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h6>Medical history</h6>
+                    <div id="recordsList">
+                        <p class="muted">No records yet.</p>
                     </div>
                 </div>
 
-                <!-- Add new diagnosis -->
-                <div class="col-md-6">
-                    <div class="card p-4 shadow-sm">
-                        <h6>Add Diagnosis</h6>
-                        <div id="errorBox" class="alert alert-danger d-none"></div>
-                        <div id="successBox" class="alert alert-success d-none"></div>
-                        <form id="recordForm">
-                            <div class="mb-2">
-                                <label class="form-label">Diagnosis</label>
-                                <input type="text" class="form-control" id="diagnosis" required>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Doctor Notes</label>
-                                <textarea class="form-control" id="doctorNotes"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Save Diagnosis</button>
-                        </form>
-                    </div>
+                <div class="card">
+                    <h6>Add diagnosis</h6>
+                    <div id="errorBox" class="alert alert-error hidden"></div>
+                    <div id="successBox" class="alert alert-success hidden"></div>
+                    <form id="recordForm">
+                        <div class="field">
+                            <label>Diagnosis</label>
+                            <input type="text" id="diagnosis" required>
+                        </div>
+                        <div class="field">
+                            <label>Doctor notes</label>
+                            <textarea id="doctorNotes"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-block">Save diagnosis</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -97,14 +91,12 @@
         async function onScanSuccess(decodedText) {
             let patientId;
             try {
-                const parsed = JSON.parse(decodedText);
-                patientId = parsed.patientId;
+                patientId = JSON.parse(decodedText).patientId;
             } catch (e) {
                 document.getElementById('scanStatus').textContent = 'Invalid QR code scanned.';
                 return;
             }
 
-            // Stop the camera once we've got a successful scan
             html5QrCode.stop();
             document.getElementById('scanStatus').textContent = 'Scanned patient ID: ' + patientId;
 
@@ -117,7 +109,7 @@
                 const patient = await apiRequest(`/patients/${patientId}`, 'GET');
                 document.getElementById('patientName').textContent = patient.name;
                 document.getElementById('patientIdLabel').textContent = patient.id;
-                document.getElementById('patientSection').classList.remove('d-none');
+                document.getElementById('patientSection').classList.remove('hidden');
 
                 await loadRecords(patientId);
             } catch (err) {
@@ -131,15 +123,15 @@
                 const listDiv = document.getElementById('recordsList');
 
                 if (records.length === 0) {
-                    listDiv.innerHTML = '<p class="text-muted">No records yet.</p>';
+                    listDiv.innerHTML = '<p class="muted">No records yet.</p>';
                     return;
                 }
 
                 listDiv.innerHTML = records.map(r => `
-                    <div class="border-bottom mb-2 pb-2">
+                    <div class="record-item">
                         <strong>${r.diagnosis}</strong><br>
-                        <small class="text-muted">${r.doctor_notes || ''}</small><br>
-                        <small class="text-muted">${new Date(r.created_at).toLocaleDateString()}</small>
+                        <span class="muted" style="font-size: 0.85rem;">${r.doctor_notes || ''}</span><br>
+                        <span class="muted" style="font-size: 0.8rem;">${new Date(r.created_at).toLocaleDateString()}</span>
                     </div>
                 `).join('');
             } catch (err) {
@@ -152,8 +144,8 @@
 
             const errorBox = document.getElementById('errorBox');
             const successBox = document.getElementById('successBox');
-            errorBox.classList.add('d-none');
-            successBox.classList.add('d-none');
+            errorBox.classList.add('hidden');
+            successBox.classList.add('hidden');
 
             try {
                 await apiRequest('/medical-records', 'POST', {
@@ -163,14 +155,14 @@
                 });
 
                 successBox.textContent = 'Diagnosis saved successfully!';
-                successBox.classList.remove('d-none');
+                successBox.classList.remove('hidden');
                 document.getElementById('recordForm').reset();
 
                 await loadRecords(currentPatientId);
 
             } catch (err) {
                 errorBox.textContent = err.message;
-                errorBox.classList.remove('d-none');
+                errorBox.classList.remove('hidden');
             }
         });
     </script>

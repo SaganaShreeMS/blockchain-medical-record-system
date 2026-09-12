@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Department · Medical Record System</title>
+    <link rel="stylesheet" href="shared/styles.css">
+</head>
+<body>
+
+<div class="bg-icons">
+    <svg class="bg-icon" style="top:12%; left:8%; width:110px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>
+    <svg class="bg-icon" style="top:65%; left:82%; width:120px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
+</div>
+
+<div class="login-wrap" style="flex-direction: column; gap: 28px;">
+    <div style="text-align: center; position: relative; z-index: 1;">
+        <h1 style="color: var(--ink); font-size: 1.5rem; margin-bottom: 4px;">Medical Record System</h1>
+        <p class="muted">Select your department to continue</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; max-width: 780px; width: 90%; position: relative; z-index: 1;">
+
+        <div class="dept-card" style="--card-color: var(--dept-reception);" onclick="goTo('Reception')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="width:34px; height:34px;"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M13 10h6M13 14h4"/></svg>
+            <div class="dept-name">Reception</div>
+        </div>
+
+        <div class="dept-card" style="--card-color: var(--dept-doctor);" onclick="goTo('Doctor')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="width:34px; height:34px;"><path d="M4 2v9a4 4 0 004 4h0a4 4 0 004-4V2M8 2v6M4 2h4M12 2v9a4 4 0 004 4h0a4 4 0 004-4v-2a2 2 0 00-2-2h-1"/><circle cx="19" cy="19" r="2"/></svg>
+            <div class="dept-name">Doctor</div>
+        </div>
+
+        <div class="dept-card" style="--card-color: var(--dept-laboratory);" onclick="goTo('Laboratory')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="width:34px; height:34px;"><path d="M9 2v6l-5 10a2 2 0 002 3h12a2 2 0 002-3L15 8V2M9 2h6M9 14h6"/></svg>
+            <div class="dept-name">Laboratory</div>
+        </div>
+
+        <div class="dept-card" style="--card-color: var(--dept-pharmacy);" onclick="goTo('Pharmacy')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="width:34px; height:34px;"><rect x="3" y="9" width="18" height="8" rx="4" transform="rotate(-25 12 13)"/><path d="M9 11l4 4" transform="rotate(-25 12 13)"/></svg>
+            <div class="dept-name">Pharmacy</div>
+        </div>
+
+        <div class="dept-card" style="--card-color: var(--dept-admin);" onclick="goTo('Admin')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="width:34px; height:34px;"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+            <div class="dept-name">Admin</div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+.dept-card {
+    background: color-mix(in srgb, var(--surface) 58%, transparent);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-top: 3px solid var(--card-color);
+    border-radius: 2px;
+    padding: 24px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--card-color);
+    cursor: pointer;
+    transition: transform 0.12s ease;
+}
+.dept-card:hover { transform: translateY(-3px); }
+.dept-name {
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--on-surface);
+}
+</style>
+
+<script>
+    function goTo(dept) {
+        window.location.href = '/login.html?dept=' + encodeURIComponent(dept);
+    }
+</script>
+</body>
+</html>

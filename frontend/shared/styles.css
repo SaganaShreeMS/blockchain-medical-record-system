@@ -1,0 +1,327 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600&display=swap');
+:root {
+    --bg: #EAF1F7;
+    --surface: #1E4260;
+    --on-surface: #EAF1F7;
+    --on-surface-muted: #A9C2D6;
+    --ink: #14293B;
+    --blue: #3E7CB1;
+    --accent-warm: #A9784A;
+    --rule: #C7B896;
+    --muted: #57708A;
+    --success: #2F6F4E;
+    --error: #9A3324;
+
+    --dept-reception: #B8860B;
+    --dept-doctor: #2F6F4E;
+    --dept-laboratory: #3E7CB1;
+    --dept-pharmacy: #6B4A8A;
+    --dept-admin: #14293B;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Work Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    margin: 0 0 0.5em 0;
+    color: var(--ink);
+}
+
+/* ---- Top bar ---- */
+.topbar {
+    background: var(--ink);
+    border-bottom: 3px solid var(--dept-color, var(--blue));
+}
+.topbar-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.topbar h1 {
+    color: var(--on-surface);
+    font-size: 1.25rem;
+    margin: 0;
+}
+.topbar-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    background: var(--dept-color, var(--blue));
+    color: #fff;
+    padding: 2px 9px;
+    border-radius: 2px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.88rem;
+    color: var(--on-surface-muted);
+}
+
+/* ---- Layout ---- */
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+}
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+@media (max-width: 800px) {
+    .grid-2 { grid-template-columns: 1fr; }
+}
+
+/* ---- Cards (now dark blue surface, light text) ---- */
+.card {
+    background: var(--surface);
+    color: var(--on-surface);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 2px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+.card h5, .card h6 {
+    color: var(--on-surface);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.card .muted, .card small, .card .text-muted {
+    color: var(--on-surface-muted) !important;
+}
+
+/* ---- Stat card ---- */
+.stat {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-left: 3px solid var(--blue);
+    padding: 14px 16px;
+}
+.stat .stat-label {
+    font-size: 0.72rem;
+    color: var(--on-surface-muted);
+    margin-bottom: 4px;
+}
+.stat .stat-value {
+    font-family: 'Lora', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--on-surface);
+}
+
+/* ---- Forms (inputs stay light — they're "cut-outs" on the dark card) ---- */
+.field { margin-bottom: 15px; }
+.field label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--on-surface-muted);
+    margin-bottom: 4px;
+}
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    border: 1px solid var(--rule);
+    background: var(--bg);
+    padding: 9px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    outline: none;
+    border-radius: 2px;
+    transition: border-color 0.15s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    border-color: var(--blue);
+}
+.field textarea { resize: vertical; min-height: 60px; }
+
+/* ---- Buttons ---- */
+.btn {
+    display: inline-block;
+    border: 1px solid var(--blue);
+    background: var(--blue);
+    color: #fff;
+    padding: 10px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 2px;
+    cursor: pointer;
+    text-align: center;
+}
+.btn:hover { opacity: 0.88; }
+.btn-block { width: 100%; }
+.btn-outline {
+    background: transparent;
+    color: var(--on-surface-muted);
+    border: 1px solid #3C5064;
+}
+.btn-outline:hover { background: rgba(255,255,255,0.06); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+.btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: var(--on-surface);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ---- Alerts ---- */
+.alert {
+    padding: 10px 14px;
+    border-left: 3px solid;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    border-radius: 2px;
+}
+.alert-error { background: #FBEEEC; border-color: var(--error); color: #6B241A; }
+.alert-success { background: #EBF2EC; border-color: var(--success); color: #1F4A34; }
+.hidden { display: none; }
+
+/* ---- Tables (inside dark cards) ---- */
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--on-surface-muted);
+    font-size: 0.72rem;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+td {
+    padding: 10px 10px;
+    color: var(--on-surface);
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--on-surface-muted);
+}
+
+/* ---- Login page ---- */
+.login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+}
+.login-card {
+    background: var(--surface);
+    color: var(--on-surface);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-top: 3px solid var(--blue);
+    padding: 40px 36px;
+    width: 340px;
+}
+.login-card h1 { color: var(--on-surface); font-size: 1.35rem; margin-bottom: 4px; }
+.login-card .sub { color: var(--on-surface-muted); font-size: 0.85rem; margin-bottom: 24px; }
+
+
+.record-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.record-item:last-child { border-bottom: none; }
+
+/* ---- QR display ---- */
+.qr-frame {
+    border: 1px dashed rgba(255,255,255,0.25);
+    padding: 20px;
+    text-align: center;
+    color: var(--on-surface-muted);
+}
+.qr-frame img {
+    width: 180px;
+    height: 180px;
+    border: 1px solid var(--rule);
+    padding: 8px;
+    background: white;
+}
+.qr-frame .qr-name {
+    font-family: 'Lora', serif;
+    font-size: 1.1rem;
+    color: var(--on-surface);
+    margin-bottom: 12px;
+}
+
+.muted { color: var(--muted); }
+.text-center { text-align: center; }
+
+
+
+/* ---- Ambient background wash ---- */
+body {
+    background:
+        radial-gradient(circle at 15% -10%, rgba(62,124,177,0.18), transparent 55%),
+        var(--bg);
+}
+
+/* ---- Floating background icons ---- */
+.bg-icons {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.bg-icon {
+    position: absolute;
+    color: var(--dept-color, var(--blue));
+    opacity: 0.09;
+    animation: bgFloat 20s ease-in-out infinite;
+}
+.bg-icon:nth-child(2) { animation-duration: 24s; animation-delay: -6s; }
+.bg-icon:nth-child(3) { animation-duration: 28s; animation-delay: -12s; }
+.bg-icon:nth-child(4) { animation-duration: 18s; animation-delay: -3s; }
+
+@keyframes bgFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(4deg); }
+}
+
+/* ---- Glass surfaces (overrides earlier solid .card etc) ---- */
+.topbar, .page, .login-wrap {
+    position: relative;
+    z-index: 1;
+}
+.card, .login-card, .stat {
+    background: color-mix(in srgb, var(--surface) 58%, transparent);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+}
+.qr-frame {
+    background: color-mix(in srgb, var(--surface) 30%, transparent);
+    backdrop-filter: blur(6px);
+}

@@ -2,65 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Laboratory Dashboard</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>Laboratory · Medical Record System</title>
+    <link rel="stylesheet" href="../shared/styles.css">
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
-<body class="bg-light">
+<body style="--dept-color: var(--dept-laboratory);">
 
-    <nav class="navbar navbar-dark bg-primary px-3">
-        <span class="navbar-brand mb-0 h1">Laboratory Dashboard</span>
-        <div>
-            <span class="text-white me-3" id="userLabel"></span>
-            <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    <div class="topbar">
+        <div class="topbar-inner">
+            <h1>Laboratory <span class="topbar-tag">Laboratory</span></h1>
+            <div class="topbar-user">
+                <span id="userLabel"></span>
+                <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+            </div>
         </div>
-    </nav>
+    </div>
 
-    <div class="container mt-4">
+    <div class="page">
 
-        <div class="card p-4 shadow-sm mb-4">
-            <h5>Scan Patient QR</h5>
-            <button class="btn btn-secondary mb-3" id="startScanBtn">Start Scanner</button>
+        <div class="card">
+            <h5>Scan patient QR</h5>
+            <button class="btn btn-secondary" id="startScanBtn" style="margin-bottom: 14px;">Start scanner</button>
             <div id="reader" style="width: 300px;"></div>
-            <div id="scanStatus" class="text-muted mt-2"></div>
+            <div id="scanStatus" class="muted" style="margin-top: 8px; font-size: 0.85rem;"></div>
         </div>
 
-        <div id="patientSection" class="d-none">
-            <div class="card p-4 shadow-sm mb-4">
-                <h5>Patient: <span id="patientName"></span> (ID: <span id="patientIdLabel"></span>)</h5>
+        <div id="patientSection" class="hidden">
+            <div class="card">
+                <h5>Patient: <span id="patientName"></span> <span class="muted">(ID: <span id="patientIdLabel"></span>)</span></h5>
             </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card p-4 shadow-sm">
-                        <h6>Lab Reports</h6>
-                        <div id="reportsList">
-                            <p class="text-muted">No reports yet.</p>
-                        </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h6>Lab reports</h6>
+                    <div id="reportsList">
+                        <p class="muted">No reports yet.</p>
                     </div>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="card p-4 shadow-sm">
-                        <h6>Add Lab Report</h6>
-                        <div id="errorBox" class="alert alert-danger d-none"></div>
-                        <div id="successBox" class="alert alert-success d-none"></div>
-                        <form id="reportForm">
-                            <div class="mb-2">
-                                <label class="form-label">Test Name</label>
-                                <input type="text" class="form-control" id="testName" required>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Result</label>
-                                <textarea class="form-control" id="result"></textarea>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Report Date</label>
-                                <input type="date" class="form-control" id="reportDate">
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Save Report</button>
-                        </form>
-                    </div>
+                <div class="card">
+                    <h6>Add lab report</h6>
+                    <div id="errorBox" class="alert alert-error hidden"></div>
+                    <div id="successBox" class="alert alert-success hidden"></div>
+                    <form id="reportForm">
+                        <div class="field">
+                            <label>Test name</label>
+                            <input type="text" id="testName" required>
+                        </div>
+                        <div class="field">
+                            <label>Result</label>
+                            <textarea id="result"></textarea>
+                        </div>
+                        <div class="field">
+                            <label>Report date</label>
+                            <input type="date" id="reportDate">
+                        </div>
+                        <button type="submit" class="btn btn-block">Save report</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -114,7 +112,7 @@
                 const patient = await apiRequest(`/patients/${patientId}`, 'GET');
                 document.getElementById('patientName').textContent = patient.name;
                 document.getElementById('patientIdLabel').textContent = patient.id;
-                document.getElementById('patientSection').classList.remove('d-none');
+                document.getElementById('patientSection').classList.remove('hidden');
 
                 await loadReports(patientId);
             } catch (err) {
@@ -128,15 +126,15 @@
                 const listDiv = document.getElementById('reportsList');
 
                 if (reports.length === 0) {
-                    listDiv.innerHTML = '<p class="text-muted">No reports yet.</p>';
+                    listDiv.innerHTML = '<p class="muted">No reports yet.</p>';
                     return;
                 }
 
                 listDiv.innerHTML = reports.map(r => `
-                    <div class="border-bottom mb-2 pb-2">
+                    <div class="record-item">
                         <strong>${r.test_name}</strong><br>
-                        <small class="text-muted">${r.result || ''}</small><br>
-                        <small class="text-muted">${r.report_date ? new Date(r.report_date).toLocaleDateString() : ''}</small>
+                        <span class="muted" style="font-size: 0.85rem;">${r.result || ''}</span><br>
+                        <span class="muted" style="font-size: 0.8rem;">${r.report_date ? new Date(r.report_date).toLocaleDateString() : ''}</span>
                     </div>
                 `).join('');
             } catch (err) {
@@ -149,8 +147,8 @@
 
             const errorBox = document.getElementById('errorBox');
             const successBox = document.getElementById('successBox');
-            errorBox.classList.add('d-none');
-            successBox.classList.add('d-none');
+            errorBox.classList.add('hidden');
+            successBox.classList.add('hidden');
 
             try {
                 await apiRequest('/lab-reports', 'POST', {
@@ -161,14 +159,14 @@
                 });
 
                 successBox.textContent = 'Lab report saved successfully!';
-                successBox.classList.remove('d-none');
+                successBox.classList.remove('hidden');
                 document.getElementById('reportForm').reset();
 
                 await loadReports(currentPatientId);
 
             } catch (err) {
                 errorBox.textContent = err.message;
-                errorBox.classList.remove('d-none');
+                errorBox.classList.remove('hidden');
             }
         });
     </script>

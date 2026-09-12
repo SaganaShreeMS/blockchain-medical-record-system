@@ -1,6 +1,30 @@
 {
-  "address": "0xe870fD51F518F04b90E68AE1405FA529B800Bc48",
+  "address": "0x0e722C756edCF5fC9430C3A2d9944Ea0E4AB19ca",
   "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "department",
+          "type": "string"
+        }
+      ],
+      "name": "DepartmentRegistered",
+      "type": "event"
+    },
     {
       "anonymous": false,
       "inputs": [
@@ -114,16 +138,24 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
           "name": "_patientId",
           "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "_department",
-          "type": "string"
         },
         {
           "internalType": "string",
@@ -134,6 +166,43 @@
       "name": "recordLog",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "_department",
+          "type": "string"
+        }
+      ],
+      "name": "registerDepartment",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "registeredDepartment",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     }
   ]

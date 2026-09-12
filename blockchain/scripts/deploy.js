@@ -1,35 +1,42 @@
 import { ethers } from "ethers";
 import fs from "fs";
 
+const DEPARTMENTS = ["Reception", "Doctor", "Laboratory", "Pharmacy", "Admin"];
+
 async function main() {
-    // Connect to your local Ganache blockchain
     const provider = new ethers.JsonRpcProvider("http://127.0.0.1:7545");
 
-    // Use the first Ganache test account to deploy (it has 100 fake ETH)
-    // Ganache's default accounts are deterministic when using Quickstart,
-    // but we'll fetch the actual private key dynamically for safety.
     const accounts = await provider.listAccounts();
-    const signer = await provider.getSigner(accounts[0].address);
+    const deployerSigner = await provider.getSigner(accounts[0].address);
 
     console.log("Deploying from account:", accounts[0].address);
 
-    // Load the compiled contract's ABI and bytecode
     const artifact = JSON.parse(
         fs.readFileSync("./artifacts/contracts/AuditLog.sol/AuditLog.json", "utf8")
     );
 
-    // Create a "factory" - a blueprint for deploying this specific contract
-    const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, signer);
+    const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, deployerSigner);
 
-    // Deploy it
     const contract = await factory.deploy();
     await contract.waitForDeployment();
 
     const contractAddress = await contract.getAddress();
-
     console.log("✅ AuditLog contract deployed at:", contractAddress);
 
-    // Save the address + ABI so our backend can use them later
+    // Register each department's Ganache account on-chain.
+    // Must be called by the owner (account 0, the deployer) — matches
+    // DEPARTMENT_ACCOUNT_INDEX in backend/config/blockchain.js.
+    console.log("\nRegistering department accounts...");
+    for (let i = 0; i < DEPARTMENTS.length; i++) {
+        const dept = DEPARTMENTS[i];
+        const account = accounts[i].address;
+
+        const tx = await contract.registerDepartment(account, dept);
+        await tx.wait();
+
+        console.log(`  ${dept.padEnd(11)} -> ${account}`);
+    }
+
     const deploymentInfo = {
         address: contractAddress,
         abi: artifact.abi
@@ -40,7 +47,7 @@ async function main() {
         JSON.stringify(deploymentInfo, null, 2)
     );
 
-    console.log("Contract info saved to deployedContract.json");
+    console.log("\nContract info saved to deployedContract.json");
 }
 
 main().catch((error) => {
