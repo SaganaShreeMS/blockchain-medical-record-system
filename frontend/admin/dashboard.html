@@ -40,8 +40,12 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <h5 style="margin-bottom: 0; border: none; padding-bottom: 0;">Blockchain audit log</h5>
-                <button class="btn btn-sm btn-secondary" id="refreshLogsBtn">Refresh</button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-sm btn-secondary" id="verifyChainBtn">Verify chain</button>
+                    <button class="btn btn-sm btn-secondary" id="refreshLogsBtn">Refresh</button>
+                </div>
             </div>
+            <div id="chainVerifyResult" style="margin-bottom: 12px;"></div>
             <p class="muted" style="font-size: 0.82rem; margin-bottom: 14px;">Tamper-evident record of every patient data access/modification, stored on the local blockchain — not editable through the app.</p>
 
             <div id="logsError" class="alert alert-error hidden"></div>
@@ -53,8 +57,10 @@
                         <th>Patient ID</th>
                         <th>Department</th>
                         <th>Action</th>
+                        <th>Tx / Block</th>
                     </tr>
                 </thead>
+
                 <tbody id="logsTableBody">
                     <tr><td colspan="4" class="muted">Loading...</td></tr>
                 </tbody>
@@ -127,6 +133,25 @@
             }
         });
 
+
+        document.getElementById('verifyChainBtn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('chainVerifyResult');
+            resultDiv.innerHTML = '<span class="muted">Verifying...</span>';
+
+            try {
+                const result = await apiRequest('/audit-logs/verify-chain', 'GET');
+
+                if (result.valid) {
+                    resultDiv.innerHTML = `<div class="alert alert-success">✔ ${result.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-error">⚠ ${result.message}</div>`;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="alert alert-error">Error: ${err.message}</div>`;
+            }
+        });
+
+
         async function loadAuditLogs() {
             const tbody = document.getElementById('logsTableBody');
             const logsError = document.getElementById('logsError');
@@ -141,13 +166,17 @@
                 }
 
                 tbody.innerHTML = logs.map(log => `
-                    <tr>
-                        <td>${new Date(log.timestamp).toLocaleString()}</td>
-                        <td>${log.patientId}</td>
-                        <td><span class="tag">${log.department}</span></td>
-                        <td>${log.action}</td>
-                    </tr>
-                `).join('');
+                <tr>
+                    <td>${new Date(log.timestamp).toLocaleString()}</td>
+                    <td>${log.patientId}</td>
+                    <td><span class="tag">${log.department}</span></td>
+                    <td>${log.action}</td>
+                    <td style="font-size: 0.75rem;" class="muted">
+                        ${log.txHash ? log.txHash.slice(0, 10) + '...' : '—'}<br>
+                        Block ${log.blockNumber ?? '—'}
+                    </td>
+                </tr>
+            `).join('');
 
             } catch (err) {
                 logsError.textContent = 'Error loading audit logs: ' + err.message;

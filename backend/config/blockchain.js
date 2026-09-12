@@ -63,8 +63,8 @@ async function recordLog(patientId, department, action) {
         await queueForDepartment(department, async () => {
             const contractInstance = await getContractForDepartment(department);
             const tx = await contractInstance.recordLog(patientId, action, { gasLimit: GAS_LIMIT });
-            await tx.wait();
-            console.log(`⛓️  Logged by ${department} (${(await contractInstance.runner.getAddress()).slice(0, 10)}...): Patient ${patientId} | ${action}`);
+            const receipt = await tx.wait();
+            console.log(`⛓️  Logged by ${department} (${(await contractInstance.runner.getAddress()).slice(0, 10)}...): Patient ${patientId} | ${action} | block ${receipt.blockNumber}`);
         });
     } catch (err) {
         console.error('Blockchain logging failed:', err.message);
@@ -93,16 +93,24 @@ async function getAllLogs() {
     const contractInstance = await getReadOnlyContract();
     const count = await contractInstance.getLogCount();
 
+    // Fetch all LogRecorded events once, so we can match each log entry
+    // to its actual transaction hash and block number
+    const events = await contractInstance.queryFilter('LogRecorded', 0, 'latest');
+
     const logs = [];
     for (let i = 0; i < count; i++) {
         const entry = await contractInstance.getLog(i);
+        const matchingEvent = events[i]; // events fire in the same order entries are added
+
         logs.push({
             patientId: entry[0].toString(),
             department: entry[1],
             action: entry[2],
             timestamp: new Date(Number(entry[3]) * 1000).toISOString(),
             previousHash: entry[4],
-            entryHash: entry[5]
+            entryHash: entry[5],
+            txHash: matchingEvent ? matchingEvent.transactionHash : null,
+            blockNumber: matchingEvent ? matchingEvent.blockNumber : null
         });
     }
 
