@@ -1,6 +1,7 @@
 const { ethers } = require('ethers');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const deploymentInfo = JSON.parse(
     fs.readFileSync(path.join(__dirname, 'deployedContract.json'), 'utf8')
@@ -71,4 +72,32 @@ async function getAllLogs() {
     return logs;
 }
 
-module.exports = { recordLog, getAllLogs };
+// Computes a deterministic hash of a record's content.
+// Must be called with the EXACT same field values whenever verifying later,
+// or the hash won't match even if nothing was actually tampered with.
+function hashRecordContent(fields) {
+    // Join all fields into one consistent string, then hash it.
+    const combined = fields.join('|');
+    const hash = crypto.createHash('sha256').update(combined).digest('hex');
+    return '0x' + hash;
+}
+
+// Stores a content hash on-chain for a given record
+async function storeRecordHash(recordKey, contentHash, department) {
+    try {
+        const contractInstance = await getContractForDepartment(department);
+        const tx = await contractInstance.storeRecordHash(recordKey, contentHash);
+        await tx.wait();
+        console.log(`🔒 Hash stored for ${recordKey}`);
+    } catch (err) {
+        console.error('Storing record hash failed:', err.message);
+    }
+}
+
+// Fetches the on-chain hash for a record, to compare against freshly computed data
+async function getRecordHash(recordKey) {
+    const contractInstance = await getReadOnlyContract();
+    return await contractInstance.getRecordHash(recordKey);
+}
+
+module.exports = { recordLog, getAllLogs, hashRecordContent, storeRecordHash, getRecordHash };

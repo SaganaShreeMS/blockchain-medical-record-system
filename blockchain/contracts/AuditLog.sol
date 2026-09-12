@@ -14,10 +14,13 @@ contract AuditLog {
 
     LogEntry[] public logs;
 
-    // Maps each blockchain address to its registered department.
-    // Set once by the contract owner (the deploying account) — staff accounts
-    // cannot register or change their own department.
     mapping(address => string) public registeredDepartment;
+
+    // Stores a content fingerprint for each medical record, keyed by a
+    // record identifier (e.g. "medical_record:14" or "lab_report:7").
+    // Anyone can later recompute the hash of the current MySQL content
+    // and compare it here to prove whether it has been altered.
+    mapping(string => bytes32) public recordHashes;
 
     event LogRecorded(
         uint256 indexed patientId,
@@ -28,6 +31,8 @@ contract AuditLog {
 
     event DepartmentRegistered(address account, string department);
 
+    event RecordHashStored(string recordKey, bytes32 contentHash, address storedBy, uint256 timestamp);
+
     modifier onlyOwner() {
         require(msg.sender == owner, "Only the contract owner can do this");
         _;
@@ -37,17 +42,11 @@ contract AuditLog {
         owner = msg.sender;
     }
 
-    // Owner-only: register which department a given address represents.
-    // Done once during setup for each of the 5 department accounts.
     function registerDepartment(address _account, string memory _department) public onlyOwner {
         registeredDepartment[_account] = _department;
         emit DepartmentRegistered(_account, _department);
     }
 
-    // Records a new audit entry. The department is NOT taken from the caller's input —
-    // it is looked up from the on-chain registry based on who is actually calling this
-    // function (msg.sender). This is the core fix: the chain verifies identity itself,
-    // rather than trusting whatever department string the backend sends.
     function recordLog(uint256 _patientId, string memory _action) public {
         string memory callerDepartment = registeredDepartment[msg.sender];
 
@@ -61,6 +60,23 @@ contract AuditLog {
         }));
 
         emit LogRecorded(_patientId, callerDepartment, _action, block.timestamp);
+    }
+
+    // Stores the content hash for a record. Called once when a medical
+    // record / lab report is created, using a hash computed by the backend
+    // from the exact same fields saved to MySQL.
+    function storeRecordHash(string memory _recordKey, bytes32 _contentHash) public {
+        string memory callerDepartment = registeredDepartment[msg.sender];
+        require(bytes(callerDepartment).length > 0, "This address is not registered to any department");
+
+        recordHashes[_recordKey] = _contentHash;
+        emit RecordHashStored(_recordKey, _contentHash, msg.sender, block.timestamp);
+    }
+
+    // Read-only: fetch the stored hash for a given record key, to compare
+    // against a freshly computed hash of the current MySQL data.
+    function getRecordHash(string memory _recordKey) public view returns (bytes32) {
+        return recordHashes[_recordKey];
     }
 
     function getLogCount() public view returns (uint256) {

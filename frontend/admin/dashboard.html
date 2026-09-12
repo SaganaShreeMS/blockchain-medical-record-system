@@ -112,10 +112,13 @@
                             <strong>${r.diagnosis}</strong><br>
                             <span class="muted" style="font-size: 0.85rem;">${r.doctor_notes || ''}</span><br>
                             <span class="muted" style="font-size: 0.8rem;">${new Date(r.created_at).toLocaleDateString()}</span>
+                            <div style="margin-top: 8px;">
+                                <button class="btn btn-sm btn-secondary" onclick="verifyRecord(${r.id}, this)">Verify integrity</button>
+                                <div id="verify-result-${r.id}" style="margin-top: 6px; font-size: 0.85rem;"></div>
+                            </div>
                         </div>
                     `).join('');
-                }
-
+}
                 loadAuditLogs();
 
             } catch (err) {
@@ -156,6 +159,31 @@
         document.getElementById('refreshLogsBtn').addEventListener('click', loadAuditLogs);
 
         loadAuditLogs();
+
+    async function verifyRecord(recordId, buttonEl) {
+    const resultDiv = document.getElementById('verify-result-' + recordId);
+    buttonEl.disabled = true;
+    buttonEl.textContent = 'Checking...';
+    resultDiv.innerHTML = '';
+
+    try {
+        const result = await apiRequest(`/medical-records/${recordId}/verify`, 'GET');
+
+        if (result.verified === true) {
+            resultDiv.innerHTML = `<span style="color: var(--success);">✔ Verified — matches blockchain record</span>`;
+        } else if (result.verified === false) {
+            resultDiv.innerHTML = `<span style="color: var(--error); font-weight: 600;">⚠ TAMPERING DETECTED — does not match blockchain record</span>`;
+        } else {
+            resultDiv.innerHTML = `<span class="muted">No blockchain fingerprint exists (created before hashing was added)</span>`;
+        }
+    } catch (err) {
+        resultDiv.innerHTML = `<span style="color: var(--error);">Error: ${err.message}</span>`;
+    } finally {
+        buttonEl.disabled = false;
+        buttonEl.textContent = 'Verify integrity';
+    }
+}
+
     </script>
 </body>
 </html>
