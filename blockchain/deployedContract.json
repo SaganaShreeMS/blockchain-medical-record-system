@@ -1,5 +1,5 @@
 {
-  "address": "0xC80948c9f8b5bBAA2A9d781458517D69b4f7667f",
+  "address": "0x6F718e79AA651e5dDa78122661258bB356BF21dE",
   "abi": [
     {
       "inputs": [],
@@ -51,6 +51,12 @@
           "internalType": "uint256",
           "name": "timestamp",
           "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "entryHash",
+          "type": "bytes32"
         }
       ],
       "name": "LogRecorded",
@@ -116,6 +122,16 @@
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
         }
       ],
       "stateMutability": "view",
@@ -182,6 +198,16 @@
           "internalType": "uint256",
           "name": "timestamp",
           "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "previousHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "entryHash",
+          "type": "bytes32"
         }
       ],
       "stateMutability": "view",
