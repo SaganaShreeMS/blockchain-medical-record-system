@@ -60,6 +60,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="card">
+            <h5>Reprint QR for existing patient</h5>
+            <div style="display: flex; gap: 8px; max-width: 400px; margin-bottom: 14px;">
+                <input type="number" id="reprintIdInput" placeholder="Enter Patient ID" style="flex: 1; border: 1px solid var(--rule); border-radius: 2px; padding: 9px 10px; background: var(--bg); color: var(--ink);">
+                <button class="btn" id="reprintBtn">Find & reprint</button>
+            </div>
+            <div id="reprintError" class="alert alert-error hidden"></div>
+            <div id="reprintResult" class="qr-frame hidden">
+                <p class="qr-name"></p>
+                <img src="" alt="Patient QR Code">
+            </div>
+        </div>
+
     </div>
 
     <script src="../shared/api.js"></script>
@@ -118,6 +132,34 @@
                 errorBox.classList.remove('hidden');
             }
         });
+
+        document.getElementById('reprintBtn').addEventListener('click', async () => {
+            const patientId = document.getElementById('reprintIdInput').value;
+            const errorBox = document.getElementById('reprintError');
+            const resultBox = document.getElementById('reprintResult');
+
+            errorBox.classList.add('hidden');
+            resultBox.classList.add('hidden');
+
+            if (!patientId) {
+                errorBox.textContent = 'Please enter a patient ID';
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const qrData = await apiRequest(`/patients/${patientId}/qrcode`, 'GET');
+
+                resultBox.querySelector('.qr-name').textContent = `${qrData.name} (ID: ${qrData.patientId})`;
+                resultBox.querySelector('img').src = qrData.qrCode;
+                resultBox.classList.remove('hidden');
+
+            } catch (err) {
+                errorBox.textContent = err.message;
+                errorBox.classList.remove('hidden');
+            }
+        });
+
     </script>
 </body>
 </html>

@@ -118,26 +118,118 @@
         }
 
         async function loadRecords(patientId) {
-            try {
-                const records = await apiRequest(`/medical-records/patient/${patientId}`, 'GET');
-                const listDiv = document.getElementById('recordsList');
+    try {
+        const records = await apiRequest(`/medical-records/patient/${patientId}`, 'GET');
+        const listDiv = document.getElementById('recordsList');
 
-                if (records.length === 0) {
-                    listDiv.innerHTML = '<p class="muted">No records yet.</p>';
-                    return;
-                }
-
-                listDiv.innerHTML = records.map(r => `
-                    <div class="record-item">
-                        <strong>${r.diagnosis}</strong><br>
-                        <span class="muted" style="font-size: 0.85rem;">${r.doctor_notes || ''}</span><br>
-                        <span class="muted" style="font-size: 0.8rem;">${new Date(r.created_at).toLocaleDateString()}</span>
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.error(err);
-            }
+        if (records.length === 0) {
+            listDiv.innerHTML = '<p class="muted">No records yet.</p>';
+            return;
         }
+
+        let html = '';
+        for (const r of records) {
+            html += `
+                <div class="record-item">
+                    <strong>${r.diagnosis}</strong><br>
+                    <span class="muted" style="font-size: 0.85rem;">${r.doctor_notes || ''}</span><br>
+                    <span class="muted" style="font-size: 0.8rem;">${new Date(r.created_at).toLocaleDateString()}</span>
+
+                    <div id="prescriptions-${r.id}" style="margin-top: 8px; padding-left: 10px; border-left: 2px solid var(--rule);">
+                        <p class="muted" style="font-size: 0.8rem;">Loading prescriptions...</p>
+                    </div>
+
+                    <div style="margin-top: 6px;">
+                        <button class="btn btn-sm btn-secondary" onclick="togglePrescriptionForm(${r.id})">+ Add prescription</button>
+                    </div>
+                    <div id="rx-form-${r.id}" class="hidden" style="margin-top: 8px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 2px;">
+                        <div class="field">
+                            <label>Medicine name</label>
+                            <input type="text" id="rx-medicine-${r.id}">
+                        </div>
+                        <div class="field">
+                            <label>Dosage</label>
+                            <input type="text" id="rx-dosage-${r.id}" placeholder="e.g. 500mg twice daily">
+                        </div>
+                        <div class="field">
+                            <label>Duration</label>
+                            <input type="text" id="rx-duration-${r.id}" placeholder="e.g. 5 days">
+                        </div>
+                        <div id="rx-error-${r.id}" class="alert alert-error hidden"></div>
+                        <button class="btn btn-sm" onclick="submitPrescription(${r.id})">Save prescription</button>
+                    </div>
+                </div>
+            `;
+        }
+        listDiv.innerHTML = html;
+
+        // Load prescriptions for each record after the HTML is in place
+        for (const r of records) {
+            loadPrescriptionsForRecord(r.id);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadPrescriptionsForRecord(recordId) {
+    const container = document.getElementById('prescriptions-' + recordId);
+    try {
+        const prescriptions = await apiRequest(`/prescriptions/record/${recordId}`, 'GET');
+
+        if (prescriptions.length === 0) {
+            container.innerHTML = '<p class="muted" style="font-size: 0.8rem;">No prescriptions for this record.</p>';
+            return;
+        }
+
+        container.innerHTML = prescriptions.map(p => `
+            <p style="font-size: 0.85rem; margin: 4px 0;">
+                💊 ${p.medicine_name} — ${p.dosage || 'N/A'}, ${p.duration || 'N/A'}
+            </p>
+        `).join('');
+    } catch (err) {
+        container.innerHTML = '<p class="muted" style="font-size: 0.8rem;">Could not load prescriptions.</p>';
+    }
+}
+
+function togglePrescriptionForm(recordId) {
+    document.getElementById('rx-form-' + recordId).classList.toggle('hidden');
+}
+
+async function submitPrescription(recordId) {
+    const medicine = document.getElementById(`rx-medicine-${recordId}`).value;
+    const dosage = document.getElementById(`rx-dosage-${recordId}`).value;
+    const duration = document.getElementById(`rx-duration-${recordId}`).value;
+    const errorBox = document.getElementById(`rx-error-${recordId}`);
+
+    errorBox.classList.add('hidden');
+
+    if (!medicine) {
+        errorBox.textContent = 'Medicine name is required';
+        errorBox.classList.remove('hidden');
+        return;
+    }
+
+    try {
+        await apiRequest('/prescriptions', 'POST', {
+            medical_record_id: recordId,
+            medicine_name: medicine,
+            dosage: dosage,
+            duration: duration
+        });
+
+        document.getElementById(`rx-medicine-${recordId}`).value = '';
+        document.getElementById(`rx-dosage-${recordId}`).value = '';
+        document.getElementById(`rx-duration-${recordId}`).value = '';
+        document.getElementById('rx-form-' + recordId).classList.add('hidden');
+
+        await loadPrescriptionsForRecord(recordId);
+
+    } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('hidden');
+    }
+}
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();

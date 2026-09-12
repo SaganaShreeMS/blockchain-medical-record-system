@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { recordLog } = require('../config/blockchain');
 
 const addPrescription = async (req, res) => {
     try {
@@ -12,6 +13,10 @@ const addPrescription = async (req, res) => {
             'INSERT INTO prescriptions (medical_record_id, medicine_name, dosage, duration) VALUES (?, ?, ?, ?)',
             [medical_record_id, medicine_name, dosage, duration]
         );
+
+        // Note: we don't have patient_id directly here, only medical_record_id —
+        // logging against the record id keeps this consistent without an extra query
+        recordLog(medical_record_id, req.user.department, 'ADD_PRESCRIPTION');
 
         res.status(201).json({
             message: 'Prescription added successfully',

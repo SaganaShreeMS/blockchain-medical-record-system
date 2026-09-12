@@ -3,7 +3,7 @@
     --bg: #EAF1F7;
     --surface: #1E4260;
     --on-surface: #EAF1F7;
-    --on-surface-muted: #A9C2D6;
+    --on-surface-muted: #C7DCEC;
     --ink: #14293B;
     --blue: #3E7CB1;
     --accent-warm: #A9784A;
@@ -26,7 +26,7 @@ body {
     background: var(--bg);
     color: var(--ink);
     font-family: 'Work Sans', sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.55;
 }
 
@@ -108,7 +108,10 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 14px;
     padding-bottom: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.15);
+    font-size: 1.2rem;
 }
+.card h6 { font-size: 1.05rem; }
+
 .card .muted, .card small, .card .text-muted {
     color: var(--on-surface-muted) !important;
 }
@@ -203,12 +206,12 @@ h1, h2, h3, h4, h5, h6 {
 .hidden { display: none; }
 
 /* ---- Tables (inside dark cards) ---- */
-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
 th {
     text-align: left;
     font-weight: 500;
     color: var(--on-surface-muted);
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     padding: 8px 10px;
     border-bottom: 1px solid rgba(255,255,255,0.3);
 }
@@ -219,11 +222,11 @@ td {
 }
 .tag {
     display: inline-block;
-    font-size: 0.7rem;
-    padding: 2px 8px;
+    font-size: 0.78rem;
+    padding: 3px 9px;
     border-radius: 2px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.28);
     color: var(--on-surface-muted);
 }
 
@@ -315,7 +318,7 @@ body {
     z-index: 1;
 }
 .card, .login-card, .stat {
-    background: color-mix(in srgb, var(--surface) 58%, transparent);
+    background: color-mix(in srgb, var(--surface) 78%, transparent);
     backdrop-filter: blur(14px) saturate(140%);
     -webkit-backdrop-filter: blur(14px) saturate(140%);
     border: 1px solid rgba(255,255,255,0.16);
