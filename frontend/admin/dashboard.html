@@ -195,22 +195,23 @@
     buttonEl.textContent = 'Checking...';
     resultDiv.innerHTML = '';
 
-    try {
-        const result = await apiRequest(`/medical-records/${recordId}/verify`, 'GET');
+   try {
+    const result = await apiRequest(`/medical-records/${recordId}/verify`, 'GET');
 
-        if (result.verified === true) {
-            resultDiv.innerHTML = `<span style="color: var(--success);">✔ Verified — matches blockchain record</span>`;
-        } else if (result.verified === false) {
-            resultDiv.innerHTML = `<span style="color: var(--error); font-weight: 600;">⚠ TAMPERING DETECTED — does not match blockchain record</span>`;
-        } else {
-            resultDiv.innerHTML = `<span class="muted">No blockchain fingerprint exists (created before hashing was added)</span>`;
-        }
-    } catch (err) {
-        resultDiv.innerHTML = `<span style="color: var(--error);">Error: ${err.message}</span>`;
-    } finally {
-        buttonEl.disabled = false;
-        buttonEl.textContent = 'Verify integrity';
+    if (result.verified === true) {
+        resultDiv.innerHTML = `<span style="display: inline-block; color: #166534; background: #dcfce7; padding: 10px 14px; border-radius: 6px; font-weight: 600;">✔ Verified — matches blockchain record</span>`;
+    } else if (result.verified === false) {
+        resultDiv.innerHTML = `<span style="display: inline-block; color: #991b1b; background: #fee2e2; padding: 10px 14px; border-radius: 6px; font-weight: 600;">⚠ TAMPERING DETECTED — does not match blockchain record</span>`;
+    } else {
+        resultDiv.innerHTML = `<span style="display: inline-block; color: #92400e; background: #fef3c7; padding: 10px 14px; border-radius: 6px; font-weight: 600;">⚠ No blockchain fingerprint exists (created before hashing was added)</span>`;
     }
+} catch (err) {
+    resultDiv.innerHTML = `<span style="display: inline-block; color: #991b1b; background: #fee2e2; padding: 10px 14px; border-radius: 6px; font-weight: 600;">Error: ${err.message}</span>`;
+} finally {
+    buttonEl.disabled = false;
+    buttonEl.textContent = 'Verify integrity';
+
+}
 }
 
     </script>
